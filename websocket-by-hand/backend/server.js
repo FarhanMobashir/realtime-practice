@@ -2,6 +2,7 @@ import express from "express";
 import nanobuffer from "nanobuffer";
 import morgan from "morgan";
 import cors from "cors";
+import { WebSocketServer } from "ws";
 
 // set up a limited array
 const msg = new nanobuffer(50); // [] => 50 lenght
@@ -20,6 +21,16 @@ app.use(cors());
 app.use(morgan("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+const wsServer = new WebSocketServer({ noServer: true });
+
+wsServer.on("connection", function connection(wsServer) {
+  wsServer.on("message", function message(data) {
+    console.log("received: %s", data);
+  });
+
+  wsServer.send("something");
+});
 
 app.get("/", function (req, res) {
   setTimeout(() => {
@@ -54,4 +65,10 @@ app.post("/poll", function (req, res) {
 // starting the server
 const port = 5000;
 app.listen(port);
+wsServer.on("upgrade", (request, socket, head) => {
+  console.log("Hello");
+  wsServer.handleUpgrade(request, socket, head, (socket) => {
+    wsServer.emit("connection", socket, request);
+  });
+});
 console.log(`Server listenting on http://localhost:${port}`);

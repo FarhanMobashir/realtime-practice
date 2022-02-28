@@ -100,44 +100,11 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [posting, setPosting] = useState(false);
 
-  useEffect(() => {
-    let timeout;
-    async function getNewMessage() {
-      let json;
-      try {
-        setLoading(true);
-        const res = await fetch(`${apiUrl}/poll`);
-        json = await res.json();
-        console.log(json.msg);
-        setLoading(false);
-        if (res.status >= 400) {
-          throw new Error("request not succeeed");
-        }
-        failedTries = 0;
-      } catch (e) {
-        console.error("Polling error", e);
-        failedTries++;
-      }
-      setAllMessages(json.msg);
-    }
-    // getNewMessage();
-    // return () => clearTimeout(timeout);
+  const ws = new WebSocket("ws://localhost:5000", ["json"]);
 
-    // ? Using request animation frame
-    let raf;
-    let timeToMakeNewRequest = 0;
-    const BACKOFF = 5000;
-    let failedTries = 0;
-    async function rafTimer(time) {
-      if (timeToMakeNewRequest <= time) {
-        await getNewMessage();
-        timeToMakeNewRequest = time + 2000 + failedTries * BACKOFF;
-      }
-      raf = requestAnimationFrame(rafTimer);
-    }
-    requestAnimationFrame(rafTimer);
-    return () => cancelAnimationFrame(raf);
-  }, []);
+  ws.addEventListener("open", () => {
+    console.log("connected");
+  });
 
   async function postNewMessage() {
     const data = {
